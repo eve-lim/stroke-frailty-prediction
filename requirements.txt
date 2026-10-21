@@ -1,0 +1,7 @@
+# Pin scikit-learn to the version in your *_meta_v2.json files ("sklearn_version").
+# Run `pip freeze` in your base env and copy the exact versions you use locally.
+scikit-learn==1.4.2
+joblib
+pandas
+plotly
+streamlit>=1.35
