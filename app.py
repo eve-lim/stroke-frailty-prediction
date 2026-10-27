@@ -6,9 +6,9 @@ Deploy: push app.py, models/ and requirements.txt to GitHub, then deploy on
 Streamlit Community Cloud with app.py as the entrypoint.
 
 Expects, in models/ (written by the train_*.py scripts):
-    death_3m_v3.joblib        /  death_3m_meta_v3.json
-    disability_3m_v3.joblib   /  disability_3m_meta_v3.json
-    ddestin_v3.joblib         /  ddestin_meta_v3.json
+    death_3m.joblib        /  death_3m_meta_v3.json
+    disability_3m.joblib   /  disability_3m_meta_v3.json
+    ddestin.joblib         /  ddestin_meta_v3.json
 
 The app NEVER trains anything. It turns form entries into one row coded
 exactly as in training, passes it to the frozen pipeline, and shows predict_proba.
@@ -33,24 +33,24 @@ OUTCOMES = [
         "title":     "3-Month Mortality",
         "subtitle":  "Death within 3 months of stroke",
         "narrative": "die within 3 months after stroke",
-        "model":     "models/death_3m_v3.joblib",
-        "meta":      "models/death_3m_meta_v3.json",
+        "model":     "models/death_3m.joblib",
+        "meta":      "models/death_3m_meta.json",
     },
     {
         "key":       "disability_3m",
         "title":     "3-Month Disability",
         "subtitle":  "Disability within 3 months of stroke",
         "narrative": "are significantly disabled 3 months post-stroke",
-        "model":     "models/disability_3m_v3.joblib",
-        "meta":      "models/disability_3m_meta_v3.json",
+        "model":     "models/disability_3m.joblib",
+        "meta":      "models/disability_3m_meta.json",
     },
     {
         "key":       "ddestin",
         "title":     "Discharge Destination",
         "subtitle":  "Discharged to institutionalized care",
         "narrative": "are discharged to a formal care facility after stroke",
-        "model":     "models/ddestin_v3.joblib",
-        "meta":      "models/ddestin_meta_v3.json",
+        "model":     "models/ddestin.joblib",
+        "meta":      "models/ddestin_meta.json",
     },
 ]
 
