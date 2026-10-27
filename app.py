@@ -33,24 +33,24 @@ OUTCOMES = [
         "title":     "3-Month Mortality",
         "subtitle":  "Death within 3 months of stroke",
         "narrative": "die within 3 months after stroke",
-        "model":     "models/death_3m.joblib",
-        "meta":      "models/death_3m_meta.json",
+        "model":     "models/death_3m_v3.joblib",
+        "meta":      "models/death_3m_meta_v3.json",
     },
     {
         "key":       "disability_3m",
         "title":     "3-Month Disability",
         "subtitle":  "Disability within 3 months of stroke",
         "narrative": "are significantly disabled 3 months post-stroke",
-        "model":     "models/disability_3m.joblib",
-        "meta":      "models/disability_3m_meta.json",
+        "model":     "models/disability_3m_v3.joblib",
+        "meta":      "models/disability_3m_meta_v3.json",
     },
     {
         "key":       "ddestin",
         "title":     "Discharge Destination",
         "subtitle":  "Discharged to institutionalized care",
         "narrative": "are discharged to a formal care facility after stroke",
-        "model":     "models/ddestin.joblib",
-        "meta":      "models/ddestin_meta.json",
+        "model":     "models/ddestin_v3.joblib",
+        "meta":      "models/ddestin_meta_v3.json",
     },
 ]
 
@@ -146,7 +146,7 @@ details.cmp .cmp-body {
     height: 8px;
     margin: 1.4rem 0 0.3rem 0;
     border-radius: 4px;
-    background: linear-gradient(to right, #e8f5e9, #fff3e0, #ffebee);
+    background: linear-gradient(to right, #DCEAF5, #D5EFE6, #FBECCC);
     border: 1px solid #e0e0e0;
 }
 .cmp-median {
@@ -226,25 +226,25 @@ def reference_parts(p: float, meta: dict):
     med = ref["median"] * 100
     med_txt = "<0.1%" if med < 0.05 else f"{med:.1f}%"       # 1 dp in the fine text
     patient_sentence = (
-        f"This patient's estimated risk is <b>{position}</b> SLSR participants."
+        f"This patient's estimated risk is <b>{position}</b> stroke patients."
     )
     return med_txt, patient_sentence, pct_rank
 
 
-def comparison_panel(p: float, meta: dict, colour: str):
-    """Collapsible 'Comparison with SLSR participants' card with a position strip."""
+def comparison_panel(p: float, meta: dict, colour: str, text_colour: str = None):
+    """Collapsible 'Comparison with stroke patients' card with a position strip."""
     parts = reference_parts(p, meta)
     if parts is None:
         return None
     med_txt, patient_sentence, pct_rank = parts
     return (
         f"<details class='cmp'>"
-        f"<summary>Comparison with SLSR participants</summary>"
+        f"<summary>Comparison with stroke patients</summary>"
         f"<div class='cmp-body'>"
         f"<div class='cmp-strip'>"
         f"<div class='cmp-median' style='left:50%;'></div>"
         f"<div class='cmp-dot' style='left:{pct_rank}%; background:{colour};'></div>"
-        f"<div class='cmp-dot-label' style='left:{pct_rank}%; color:{colour};'>This patient</div>"
+        f"<div class='cmp-dot-label' style='left:{pct_rank}%; color:{text_colour or colour};'>This patient</div>"
         f"</div>"
         f"<div class='cmp-ends'><span>Lower risk</span>"
         f"<span class='cmp-med-label'>Median: {med_txt}</span>"
@@ -256,13 +256,35 @@ def comparison_panel(p: float, meta: dict, colour: str):
 
 
 def risk_colour(p: float) -> str:
-    """Traffic-light colour based on probability."""
+    """Colourblind-friendly colour based on probability (Okabe–Ito palette)."""
     if p < 0.20:
-        return "#2e7d32"   # green
+        return "#0072B2"   # blue: low
     elif p < 0.60:
-        return "#f57c00"   # amber
+        return "#009E73"   # bluish green: moderate
     else:
-        return "#c62828"   # red
+        return "#E69F00"   # orange: high
+
+
+def risk_text_colour(p: float) -> str:
+    """Colour for TEXT. Same hues as risk_colour, but bluish green and orange are
+    darkened so small text stays readable on white (the Okabe–Ito shades are too
+    light for text: #009E73 = 3.4:1, #E69F00 = 2.3:1; target is 4.5:1)."""
+    if p < 0.20:
+        return "#0072B2"   # blue (5.2:1)
+    elif p < 0.60:
+        return "#00775A"   # dark bluish green (5.6:1)
+    else:
+        return "#8F6000"   # dark orange (5.5:1)
+
+
+def risk_level(p: float) -> str:
+    """Risk band label, using the same cut-offs as risk_colour."""
+    if p < 0.20:
+        return "Low risk"
+    elif p < 0.60:
+        return "Moderate risk"
+    else:
+        return "High risk"
 
 
 @st.cache_resource
@@ -452,7 +474,7 @@ def out_of_range_warnings(values: dict, meta: dict) -> list:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def gauge(p: float, title: str) -> go.Figure:
-    """Traffic-light gauge: green < 20 %, amber 20–60 %, red >= 60 %."""
+    """Gauge: blue < 20 %, bluish green 20–60 %, orange >= 60 % (Okabe–Ito, colourblind-friendly)."""
     colour = risk_colour(p)
     tiny   = p * 100 < 0.5          # would display as "0%"; show "<1%" instead
     fig = go.Figure(go.Indicator(
@@ -470,9 +492,9 @@ def gauge(p: float, title: str) -> go.Figure:
             },
             "bar":  {"color": colour, "thickness": 0.25},
             "steps": [
-                {"range": [0,   20],  "color": "#e8f5e9"},  # light green
-                {"range": [20,  60],  "color": "#fff3e0"},  # light amber
-                {"range": [60, 100],  "color": "#ffebee"},  # light red
+                {"range": [0,   20],  "color": "#DCEAF5"},  # light blue
+                {"range": [20,  60],  "color": "#D5EFE6"},  # light bluish green
+                {"range": [60, 100],  "color": "#FBECCC"},  # light orange
             ],
             "threshold": {
                 "line":      {"color": colour, "width": 5},
@@ -487,7 +509,7 @@ def gauge(p: float, title: str) -> go.Figure:
     if tiny:
         fig.add_annotation(
             text="<1%", x=0.5, y=0.08, xref="paper", yref="paper",
-            showarrow=False, font={"size": 40, "color": colour},
+            showarrow=False, font={"size": 40, "color": risk_text_colour(p)},
         )
     return fig
 
@@ -598,12 +620,21 @@ def main():
 
         p      = float(model.predict_proba(build_row(values, meta))[0, 1])
         colour = risk_colour(p)
+        text_colour = risk_text_colour(p)
 
         with col:
             st.plotly_chart(gauge(p, o["title"]), use_container_width=True)
+            # Small risk band label directly under the risk score
+            st.markdown(
+                f"<div style='text-align:center; color:{text_colour}; "
+                f"font-size:0.8rem; font-weight:700; letter-spacing:0.08em; "
+                f"text-transform:uppercase; margin-top:0.3rem; margin-bottom:0.5rem;'>"
+                f"{risk_level(p)}</div>",
+                unsafe_allow_html=True,
+            )
             # BUG FIX: use per-outcome narrative (not the hardcoded "die within 3 months")
             st.markdown(
-                f"<div style='text-align:center; color:{colour}; "
+                f"<div style='text-align:center; color:{text_colour}; "
                 f"font-weight:bold; font-size:15px; line-height:1.5; "
                 f"margin-bottom:0.9rem;'>"
                 f"{fmt_in_100(p)} in 100 patients with this profile <br>"
@@ -611,7 +642,7 @@ def main():
                 f"</div>",
                 unsafe_allow_html=True,
             )
-            panel = comparison_panel(p, meta, colour)
+            panel = comparison_panel(p, meta, colour, text_colour)
             if panel:
                 st.markdown(panel, unsafe_allow_html=True)
 
